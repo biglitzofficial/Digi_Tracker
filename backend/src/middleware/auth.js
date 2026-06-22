@@ -18,7 +18,7 @@ const authenticate = async (req, res, next) => {
       throw new AppError('User not found or inactive', 401);
     }
 
-    req.user = sanitizeUser(user);
+    req.user = await sanitizeUser(user);
     req.businessId = user.businessId ? String(user.businessId) : null;
     next();
   } catch (error) {
