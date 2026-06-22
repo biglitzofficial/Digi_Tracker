@@ -18,7 +18,7 @@ async function attachUserMethods(user) {
   };
 }
 
-async function sanitizeUser(user) {
+function sanitizeUser(user) {
   if (!user) return null;
   const { password, passwordResetToken, passwordResetExpires, ...rest } = user;
   return rest;
