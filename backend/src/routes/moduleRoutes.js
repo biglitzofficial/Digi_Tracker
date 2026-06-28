@@ -8,6 +8,7 @@ const router = Router();
 router.use(authenticate, tenantScope);
 
 router.get('/', moduleController.listModules);
+router.post('/seed-defaults', authorize('business_owner'), moduleController.seedDefaults);
 router.get('/:id', moduleController.getModule);
 router.post('/', authorize('business_owner'), validate(schemas.createModule), moduleController.createModule);
 router.put('/:id', authorize('business_owner'), validate(schemas.updateModule), moduleController.updateModule);

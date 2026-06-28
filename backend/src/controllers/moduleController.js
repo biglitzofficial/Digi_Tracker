@@ -6,6 +6,11 @@ const listModules = asyncHandler(async (req, res) => {
   sendSuccess(res, modules);
 });
 
+const seedDefaults = asyncHandler(async (req, res) => {
+  const result = await moduleService.seedDefaults(req.businessId, req.user._id);
+  sendSuccess(res, result, `Added ${result.created} module(s)`);
+});
+
 const getModule = asyncHandler(async (req, res) => {
   const mod = await moduleService.getById(req.businessId, req.params.id);
   sendSuccess(res, mod);
@@ -26,4 +31,4 @@ const deleteModule = asyncHandler(async (req, res) => {
   sendSuccess(res, null, 'Module deactivated');
 });
 
-module.exports = { listModules, getModule, createModule, updateModule, deleteModule };
+module.exports = { listModules, getModule, createModule, updateModule, deleteModule, seedDefaults };

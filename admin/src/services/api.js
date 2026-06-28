@@ -66,6 +66,7 @@ export const moduleAPI = {
   create: (data) => api.post('/modules', data),
   update: (id, data) => api.put(`/modules/${id}`, data),
   delete: (id) => api.delete(`/modules/${id}`),
+  seedDefaults: () => api.post('/modules/seed-defaults'),
 };
 
 export const entryAPI = {

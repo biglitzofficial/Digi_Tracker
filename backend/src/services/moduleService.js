@@ -1,5 +1,6 @@
 const slugify = require('slugify');
 const moduleRepository = require('../repositories/moduleRepository');
+const { seedDefaultModules } = require('../seeds/defaultModules');
 const AppError = require('../utils/AppError');
 
 class ModuleService {
@@ -42,6 +43,8 @@ class ModuleService {
       color: data.color,
       fields,
       createdBy: userId,
+      isActive: true,
+      isDefault: false,
     });
   }
 
@@ -66,6 +69,11 @@ class ModuleService {
   async deactivate(businessId, moduleId) {
     await this.getById(businessId, moduleId);
     return moduleRepository.update(moduleId, { isActive: false });
+  }
+
+  async seedDefaults(businessId, userId) {
+    if (!businessId) throw new AppError('No business context', 403);
+    return seedDefaultModules(businessId, userId, { skipExisting: true });
   }
 }
 

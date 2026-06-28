@@ -19,6 +19,7 @@ export default function Modules() {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [seeding, setSeeding] = useState(false);
   const location = useLocation();
 
   const loadModules = () => {
@@ -32,6 +33,19 @@ export default function Modules() {
   useEffect(() => {
     loadModules();
   }, [location.key]);
+
+  const handleSeedDefaults = async () => {
+    setSeeding(true);
+    try {
+      const { data } = await moduleAPI.seedDefaults();
+      toast.success(data.message || 'Default modules installed');
+      loadModules();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to install default modules');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const handleDelete = async (mod) => {
     if (!confirm(`Delete "${mod.name}"? Existing entries for this module will remain in history.`)) return;
@@ -55,9 +69,20 @@ export default function Modules() {
           <h1 className="text-2xl font-bold">Modules</h1>
           <p className="text-gray-500">Manage tracking modules</p>
         </div>
-        <Link to="/modules/new" className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Create Module
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleSeedDefaults}
+            disabled={seeding}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Package className="w-4 h-4" />
+            {seeding ? 'Installing...' : 'Install Default Modules'}
+          </button>
+          <Link to="/modules/new" className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Create Module
+          </Link>
+        </div>
       </div>
 
       {loading ? (
