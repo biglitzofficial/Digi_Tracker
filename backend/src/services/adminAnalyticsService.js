@@ -132,6 +132,7 @@ function buildStaffReports(staffUsers, activeModules, entries, days) {
 
       return {
         moduleId: mod._id,
+        slug: mod.slug,
         moduleName: mod.name,
         icon: mod.icon,
         color: mod.color,
@@ -141,6 +142,10 @@ function buildStaffReports(staffUsers, activeModules, entries, days) {
         performance,
         businessAvgGrowth,
         fields,
+        latestValue: fields[0]?.latestValue ?? null,
+        primaryFieldName: primaryField?.name ?? fields[0]?.name ?? null,
+        primaryFieldType: primaryField?.type ?? fields[0]?.type ?? 'number',
+        trend: growth > 0 ? 'up' : growth < 0 ? 'down' : 'flat',
       };
     });
 
@@ -170,6 +175,105 @@ function buildStaffReports(staffUsers, activeModules, entries, days) {
       recommendations: buildRecommendations(modulePerformance),
     };
   }).sort((a, b) => b.overallScore - a.overallScore);
+}
+
+function classifyOverallSignal(staff) {
+  const withData = staff.modules?.filter((m) => m.performance !== 'no_data') || [];
+  if (!withData.length) return 'no_data';
+  const highCount = withData.filter((m) => m.performance === 'high').length;
+  const lowCount = withData.filter((m) => m.performance === 'low').length;
+  if (staff.avgGrowth >= 5 || highCount > lowCount) return 'high';
+  if (staff.avgGrowth < 0 || lowCount > highCount) return 'low';
+  return 'average';
+}
+
+const MODULE_COLUMN_ORDER = [
+  'instagram', 'whatsapp-community', 'youtube', 'facebook', 'linkedin', 'google-my-business',
+];
+
+function buildStaffMatrix(businessRows) {
+  const columnMap = new Map();
+
+  for (const biz of businessRows) {
+    for (const mod of biz.modules || []) {
+      if (!columnMap.has(mod.slug)) {
+        columnMap.set(mod.slug, { slug: mod.slug, name: mod.name, icon: mod.icon });
+      }
+    }
+  }
+
+  const columns = [...columnMap.values()].sort((a, b) => {
+    const ia = MODULE_COLUMN_ORDER.indexOf(a.slug);
+    const ib = MODULE_COLUMN_ORDER.indexOf(b.slug);
+    if (ia === -1 && ib === -1) return a.name.localeCompare(b.name);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  const rows = [];
+
+  for (const biz of businessRows) {
+    const bizSlugs = new Set((biz.modules || []).map((m) => m.slug));
+
+    for (const staff of biz.staff || []) {
+      const cells = {};
+
+      for (const col of columns) {
+        if (!bizSlugs.has(col.slug)) {
+          cells[col.slug] = { signal: 'na', trend: 'flat', growth: 0, latestValue: null, entries: 0, na: true };
+          continue;
+        }
+
+        const mp = staff.modules?.find((m) => m.slug === col.slug);
+        if (!mp || mp.performance === 'no_data') {
+          cells[col.slug] = {
+            signal: 'no_data',
+            trend: 'flat',
+            growth: 0,
+            latestValue: null,
+            fieldName: null,
+            fieldType: 'number',
+            entries: mp?.entries ?? 0,
+          };
+        } else {
+          cells[col.slug] = {
+            signal: mp.performance,
+            trend: mp.trend,
+            growth: mp.growth,
+            latestValue: mp.latestValue,
+            fieldName: mp.primaryFieldName,
+            fieldType: mp.primaryFieldType,
+            entries: mp.entries,
+          };
+        }
+      }
+
+      const overallSignal = classifyOverallSignal(staff);
+      rows.push({
+        businessId: biz.businessId,
+        businessName: biz.name,
+        staffId: staff.userId,
+        staffName: staff.name,
+        points: staff.points,
+        streak: staff.streak,
+        cells,
+        overall: {
+          signal: overallSignal,
+          score: staff.overallScore,
+          avgGrowth: staff.avgGrowth,
+          trend: staff.avgGrowth > 0 ? 'up' : staff.avgGrowth < 0 ? 'down' : 'flat',
+          label: overallSignal === 'high' ? 'Strong'
+            : overallSignal === 'low' ? 'Weak'
+              : overallSignal === 'average' ? 'Stable' : 'N/A',
+        },
+      });
+    }
+  }
+
+  rows.sort((a, b) => b.overall.score - a.overall.score);
+
+  return { columns, rows };
 }
 
 function buildBusinessRow(business, { start, end, days }) {
@@ -249,13 +353,17 @@ class AdminAnalyticsService {
 
     rows.sort((a, b) => b.avgGrowth - a.avgGrowth);
 
+    const staffMatrix = buildStaffMatrix(rows);
+
     return {
       period,
       start,
       end,
       businesses: rows,
+      staffMatrix,
       summary: {
         totalBusinesses: rows.length,
+        totalStaff: staffMatrix.rows.length,
         totalEntries: rows.reduce((s, b) => s + b.periodEntries, 0),
         topBusiness: rows[0] || null,
       },
