@@ -3,7 +3,9 @@ import { Navigate, Link } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { Building2, TrendingUp, ArrowLeft } from 'lucide-react';
+import {
+  Building2, TrendingUp, ArrowLeft, ChevronDown, ChevronUp, Users, Flame, Trophy,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { adminAnalyticsAPI } from '../services/api';
@@ -11,11 +13,195 @@ import EmptyState from '../components/EmptyState';
 
 const COLORS = ['#6366F1', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899', '#3B82F6'];
 
+const PERF_STYLE = {
+  high: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  average: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  low: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  no_data: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
+
+const PERF_LABEL = {
+  high: 'High',
+  average: 'Avg',
+  low: 'Low',
+  no_data: 'No data',
+};
+
+function formatValue(val, type) {
+  if (val == null) return '—';
+  if (type === 'currency') return `$${Number(val).toLocaleString()}`;
+  if (type === 'percentage') return `${val}%`;
+  return Number(val).toLocaleString();
+}
+
+function BusinessDetail({ business }) {
+  return (
+    <div className="px-6 pb-6 pt-2 space-y-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30">
+      <div>
+        <h4 className="font-semibold text-sm mb-3">Channel & field growth (business totals)</h4>
+        <div className="space-y-4">
+          {business.modules?.map((mod) => (
+            <div key={mod.moduleId} className="card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <p className="font-medium">{mod.name}</p>
+                <div className="flex gap-3 text-sm">
+                  <span className={mod.growth >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {mod.growth}% growth
+                  </span>
+                  <span className="text-gray-500">{mod.entries} entries</span>
+                  <span className="text-gray-500">{mod.submissionRate}% submitted</span>
+                </div>
+              </div>
+              {mod.fields?.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                        <th className="pb-2 pr-4">Field</th>
+                        <th className="pb-2 pr-4">Opening</th>
+                        <th className="pb-2 pr-4">Latest</th>
+                        <th className="pb-2 pr-4">Net change</th>
+                        <th className="pb-2">Growth</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mod.fields.map((f) => (
+                        <tr key={f.slug} className="border-b border-gray-100 dark:border-gray-800">
+                          <td className="py-2 pr-4 font-medium">{f.name}</td>
+                          <td className="py-2 pr-4 text-gray-500">{formatValue(f.openingBalance, f.type)}</td>
+                          <td className="py-2 pr-4">{formatValue(f.latestValue, f.type)}</td>
+                          <td className="py-2 pr-4">{f.netChange != null ? formatValue(f.netChange, f.type) : '—'}</td>
+                          <td className={`py-2 ${f.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {f.growth}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">No numeric fields</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4" /> Staff performance
+        </h4>
+        {!business.staff?.length ? (
+          <p className="text-sm text-gray-500">No active staff for this business</p>
+        ) : (
+          <div className="space-y-4">
+            {business.staff.map((s) => (
+              <div key={s.userId} className="card p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                  <div>
+                    <p className="font-semibold">{s.name}</p>
+                    <p className="text-xs text-gray-500">{s.email}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <span className="flex items-center gap-1">
+                      <Trophy className="w-4 h-4 text-yellow-500" /> {s.points} pts
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Flame className="w-4 h-4 text-orange-500" /> {s.streak} streak
+                    </span>
+                    <span className="font-medium text-primary-600">Score: {s.overallScore}</span>
+                  </div>
+                </div>
+
+                {(s.strengths?.length > 0 || s.weaknesses?.length > 0) && (
+                  <div className="flex flex-wrap gap-2 mb-4 text-xs">
+                    {s.strengths?.map((name) => (
+                      <span key={name} className="px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                        ↑ {name}
+                      </span>
+                    ))}
+                    {s.weaknesses?.map((name) => (
+                      <span key={name} className="px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                        ↓ {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs min-w-[640px]">
+                    <thead>
+                      <tr className="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                        <th className="pb-2 pr-3">Module</th>
+                        <th className="pb-2 pr-3">Status</th>
+                        <th className="pb-2 pr-3">Growth</th>
+                        <th className="pb-2 pr-3">Completion</th>
+                        <th className="pb-2">Field results</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {s.modules?.map((m) => (
+                        <tr key={m.moduleId} className="border-b border-gray-100 dark:border-gray-800 align-top">
+                          <td className="py-2 pr-3 font-medium whitespace-nowrap">{m.moduleName}</td>
+                          <td className="py-2 pr-3">
+                            <span className={`px-2 py-0.5 rounded-full font-medium ${PERF_STYLE[m.performance]}`}>
+                              {PERF_LABEL[m.performance]}
+                            </span>
+                          </td>
+                          <td className={`py-2 pr-3 ${m.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {m.performance === 'no_data' ? '—' : `${m.growth}%`}
+                          </td>
+                          <td className="py-2 pr-3">{m.completionRate}%</td>
+                          <td className="py-2">
+                            {m.fields?.length ? (
+                              <div className="flex flex-wrap gap-1">
+                                {m.fields.map((f) => (
+                                  <span
+                                    key={f.slug}
+                                    className="inline-block px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                    title={`${f.name}: ${f.growth}% growth`}
+                                  >
+                                    {f.name}: {formatValue(f.latestValue, f.type)}
+                                    {f.growth !== 0 && (
+                                      <span className={f.growth >= 0 ? ' text-green-600' : ' text-red-600'}>
+                                        {' '}({f.growth > 0 ? '+' : ''}{f.growth}%)
+                                      </span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {s.recommendations?.length > 0 && (
+                  <ul className="mt-3 text-xs text-gray-500 list-disc list-inside space-y-0.5">
+                    {s.recommendations.map((tip, i) => (
+                      <li key={i}>{tip}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SuperAdminBusinessAnalytics() {
   const { user, loading: authLoading } = useAuth();
   const [period, setPeriod] = useState('monthly');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -35,6 +221,10 @@ export default function SuperAdminBusinessAnalytics() {
     entries: b.periodEntries,
   }));
 
+  const toggleExpand = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -42,7 +232,9 @@ export default function SuperAdminBusinessAnalytics() {
           <ArrowLeft className="w-4 h-4" /> Super Admin
         </Link>
         <h1 className="text-2xl font-bold">Business Comparison</h1>
-        <p className="text-gray-500">Compare growth and activity across all businesses</p>
+        <p className="text-gray-500">
+          Compare businesses, channel growth, field results, and staff performance
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -101,45 +293,44 @@ export default function SuperAdminBusinessAnalytics() {
           </div>
 
           <div className="card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
-                <tr className="text-left text-gray-500">
-                  <th className="px-6 py-3">Business</th>
-                  <th className="px-6 py-3">Staff</th>
-                  <th className="px-6 py-3">Entries</th>
-                  <th className="px-6 py-3">Avg Growth</th>
-                  <th className="px-6 py-3">Submission Rate</th>
-                  <th className="px-6 py-3">Best Channel</th>
-                  <th className="px-6 py-3">Needs Attention</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.businesses.map((b) => (
-                  <tr key={b.businessId} className="border-t border-gray-100 dark:border-gray-800">
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{b.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{b.type?.replace('_', ' ')}</p>
-                    </td>
-                    <td className="px-6 py-4">{b.staffCount}</td>
-                    <td className="px-6 py-4">{b.periodEntries}</td>
-                    <td className="px-6 py-4">
-                      <span className={b.avgGrowth >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {b.avgGrowth}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">{b.submissionRate}%</td>
-                    <td className="px-6 py-4 text-green-700 dark:text-green-400">
-                      {b.bestModule ? `${b.bestModule.name} (${b.bestModule.growth}%)` : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-amber-700 dark:text-amber-400">
-                      {b.worstModule && b.worstModule.entries > 0
-                        ? `${b.worstModule.name} (${b.worstModule.growth}%)`
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="font-semibold">Business breakdown</h3>
+              <p className="text-sm text-gray-500">Click a row to see field growth and staff results</p>
+            </div>
+            {data.businesses.map((b) => (
+              <div key={b.businessId} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <button
+                  type="button"
+                  className="w-full px-6 py-4 flex flex-wrap items-center gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  onClick={() => toggleExpand(b.businessId)}
+                >
+                  <div className="flex-1 min-w-[160px]">
+                    <p className="font-medium">{b.name}</p>
+                    <p className="text-xs text-gray-500 capitalize">{b.type?.replace('_', ' ')}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <span className="text-gray-500">
+                      <Users className="w-3.5 h-3.5 inline mr-1" />
+                      {b.staff?.[0]?.name || (b.staffCount ? `${b.staffCount} staff` : 'No staff')}
+                    </span>
+                    <span>{b.periodEntries} entries</span>
+                    <span className={b.avgGrowth >= 0 ? 'text-green-600' : 'text-red-600'}>{b.avgGrowth}% growth</span>
+                    <span className="text-green-700 dark:text-green-400 hidden sm:inline">
+                      Best: {b.bestModule?.name || '—'}
+                    </span>
+                    <span className="text-amber-700 dark:text-amber-400 hidden sm:inline">
+                      Weak: {b.worstModule?.entries > 0 ? b.worstModule.name : '—'}
+                    </span>
+                  </div>
+                  {expandedId === b.businessId ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
+                  )}
+                </button>
+                {expandedId === b.businessId && <BusinessDetail business={b} />}
+              </div>
+            ))}
           </div>
         </>
       )}
