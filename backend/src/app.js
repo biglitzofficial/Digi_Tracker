@@ -9,6 +9,26 @@ const { errorHandler } = require('./utils/helpers');
 
 const app = express();
 
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+
+  const allowed = config.cors.origin;
+  if (allowed.includes(origin)) return true;
+
+  const domain = config.cors.allowedDomain;
+  if (domain) {
+    try {
+      const { hostname, protocol } = new URL(origin);
+      if (protocol !== 'http:' && protocol !== 'https:') return false;
+      if (hostname === domain || hostname.endsWith(`.${domain}`)) return true;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 const corsOptions = {
   origin(origin, callback) {
     // Allow Flutter web / Vite dev servers on any localhost port in development
@@ -17,8 +37,7 @@ const corsOptions = {
         return callback(null, true);
       }
     }
-    const allowed = config.cors.origin;
-    if (!origin || allowed.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));

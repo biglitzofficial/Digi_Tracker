@@ -10,7 +10,9 @@ module.exports = {
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'],
+    origin: process.env.CORS_ORIGIN?.split(',').map((s) => s.trim()).filter(Boolean) || ['http://localhost:5173'],
+    // Optional: allow any subdomain, e.g. CORS_ALLOWED_DOMAIN=biglitz.in
+    allowedDomain: process.env.CORS_ALLOWED_DOMAIN?.trim() || null,
   },
   smtp: {
     host: process.env.SMTP_HOST,
