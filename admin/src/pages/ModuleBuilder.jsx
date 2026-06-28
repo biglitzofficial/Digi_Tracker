@@ -17,6 +17,7 @@ export default function ModuleBuilder() {
     name: '', description: '', icon: 'chart-bar', color: '#6366F1', fields: [emptyField()],
   });
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
@@ -49,6 +50,21 @@ export default function ModuleBuilder() {
   const removeField = (index) => {
     if (form.fields.length <= 1) return;
     setForm({ ...form, fields: form.fields.filter((_, i) => i !== index) });
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${form.name}"? Existing entries for this module will remain in history.`)) return;
+
+    setDeleting(true);
+    try {
+      await moduleAPI.delete(id);
+      toast.success('Module deleted');
+      navigate('/modules');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete module');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -158,11 +174,24 @@ export default function ModuleBuilder() {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <button type="button" className="btn-secondary" onClick={() => navigate('/modules')}>Cancel</button>
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : isEdit ? 'Update Module' : 'Create Module'}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-3">
+            <button type="button" className="btn-secondary" onClick={() => navigate('/modules')}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={loading || deleting}>
+              {loading ? 'Saving...' : isEdit ? 'Update Module' : 'Create Module'}
+            </button>
+          </div>
+          {isEdit && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={loading || deleting}
+              className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              {deleting ? 'Deleting...' : 'Delete Module'}
+            </button>
+          )}
         </div>
       </form>
     </div>

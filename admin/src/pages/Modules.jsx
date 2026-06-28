@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { moduleAPI } from '../services/api';
 
 const iconMap = {
@@ -17,15 +18,35 @@ const iconMap = {
 export default function Modules() {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
   const location = useLocation();
 
-  useEffect(() => {
+  const loadModules = () => {
     setLoading(true);
     moduleAPI.list({ isActive: true })
       .then((res) => setModules(res.data.data))
       .catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadModules();
   }, [location.key]);
+
+  const handleDelete = async (mod) => {
+    if (!confirm(`Delete "${mod.name}"? Existing entries for this module will remain in history.`)) return;
+
+    setDeletingId(mod._id);
+    try {
+      await moduleAPI.delete(mod._id);
+      toast.success('Module deleted');
+      setModules((prev) => prev.filter((m) => m._id !== mod._id));
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete module');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -79,9 +100,20 @@ export default function Modules() {
                   <span className="text-xs text-gray-400">+{mod.fields.length - 4} more</span>
                 )}
               </div>
-              <Link to={`/modules/${mod._id}/edit`} className="mt-4 text-sm text-primary-600 hover:text-primary-700 font-medium inline-block">
-                Edit Module →
-              </Link>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <Link to={`/modules/${mod._id}/edit`} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                  Edit Module →
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(mod)}
+                  disabled={deletingId === mod._id}
+                  className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {deletingId === mod._id ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             </div>
           ))}
         </div>
