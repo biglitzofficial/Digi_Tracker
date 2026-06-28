@@ -116,22 +116,6 @@ async function seed() {
 
   await seedDefaultModules(business._id, owner._id);
 
-  await moduleRepository.create({
-    businessId: business._id,
-    name: 'YouTube',
-    slug: 'youtube',
-    description: 'Track YouTube channel metrics',
-    icon: 'youtube',
-    color: '#FF0000',
-    createdBy: owner._id,
-    isActive: true,
-    fields: [
-      { name: 'Subscribers', slug: 'subscribers', type: 'number', required: true, order: 1, isActive: true },
-      { name: 'Views', slug: 'views', type: 'number', required: true, order: 2, isActive: true },
-      { name: 'Watch Time (hrs)', slug: 'watch_time', type: 'number', required: false, order: 3, isActive: true },
-    ],
-  });
-
   const modules = await moduleRepository.findByBusiness(business._id);
   const instagram = modules.find((m) => m.slug === 'instagram');
   const whatsapp = modules.find((m) => m.slug === 'whatsapp-community');

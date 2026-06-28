@@ -65,6 +65,13 @@ ModuleBrand moduleBrandFor(String? slug, String? iconName, String? hexColor) {
       backgroundColor: Color(0xFFE8F1FA),
     );
   }
+  if (slugKey.contains('google') || slugKey.contains('gmb')) {
+    return const ModuleBrand(
+      icon: FontAwesomeIcons.google,
+      color: Color(0xFF4285F4),
+      backgroundColor: Color(0xFFE8F0FE),
+    );
+  }
 
   Color color = const Color(0xFF6366F1);
   if (hexColor != null && hexColor.startsWith('#')) {

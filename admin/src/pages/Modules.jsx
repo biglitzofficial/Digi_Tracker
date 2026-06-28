@@ -8,19 +8,24 @@ const iconMap = {
   whatsapp: '💬',
   youtube: '📺',
   facebook: '📘',
+  linkedin: '💼',
+  google: '📍',
+  'google-my-business': '📍',
   'chart-bar': '📊',
 };
 
 export default function Modules() {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
+    setLoading(true);
     moduleAPI.list({ isActive: true })
       .then((res) => setModules(res.data.data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.key]);
 
   return (
     <div className="space-y-6">

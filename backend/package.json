@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/seeds/seed.js",
+    "seed:modules": "node src/seeds/seedModules.js",
     "test": "jest --forceExit --detectOpenHandles"
   },
   "dependencies": {
