@@ -14,6 +14,8 @@ import Reports from './pages/Reports';
 import Entries from './pages/Entries';
 import EntryForm from './pages/EntryForm';
 import SuperAdmin from './pages/SuperAdmin';
+import SuperAdminBusinessAnalytics from './pages/SuperAdminBusinessAnalytics';
+import SuperAdminStaffPerformance from './pages/SuperAdminStaffPerformance';
 import Onboarding from './pages/Onboarding';
 import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
@@ -55,6 +57,8 @@ export default function App() {
         <Route path="rewards" element={<Rewards />} />
         <Route path="reports" element={<RoleRoute managerOnly><Reports /></RoleRoute>} />
         <Route path="super-admin" element={<SuperAdmin />} />
+        <Route path="super-admin/business-analytics" element={<SuperAdminBusinessAnalytics />} />
+        <Route path="super-admin/staff-performance" element={<SuperAdminStaffPerformance />} />
         <Route path="settings" element={<RoleRoute managerOnly><Settings /></RoleRoute>} />
       </Route>
     </Routes>

@@ -1,5 +1,6 @@
 const { asyncHandler, sendSuccess } = require('../utils/helpers');
 const { analyticsService } = require('../services');
+const adminAnalyticsService = require('../services/adminAnalyticsService');
 
 const getDashboard = asyncHandler(async (req, res) => {
   const data = await analyticsService.getDashboard(req.businessId);
@@ -26,4 +27,18 @@ const getOverview = asyncHandler(async (req, res) => {
   sendSuccess(res, data);
 });
 
-module.exports = { getDashboard, getGrowth, getInsights, getChartData, getOverview };
+const getAdminBusinessComparison = asyncHandler(async (req, res) => {
+  const data = await adminAnalyticsService.getBusinessComparison(req.query);
+  sendSuccess(res, data);
+});
+
+const getAdminStaffPerformance = asyncHandler(async (req, res) => {
+  const businessId = req.query.businessId || req.businessId;
+  const data = await adminAnalyticsService.getStaffPerformance(businessId, req.query);
+  sendSuccess(res, data);
+});
+
+module.exports = {
+  getDashboard, getGrowth, getInsights, getChartData, getOverview,
+  getAdminBusinessComparison, getAdminStaffPerformance,
+};

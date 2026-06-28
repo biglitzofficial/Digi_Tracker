@@ -109,6 +109,11 @@ export const analyticsAPI = {
   charts: (moduleId, params) => api.get(`/analytics/charts/${moduleId}`, { params }),
 };
 
+export const adminAnalyticsAPI = {
+  businessComparison: (params) => api.get('/analytics/admin/business-comparison', { params }),
+  staffPerformance: (params) => api.get('/analytics/admin/staff-performance', { params }),
+};
+
 export const rewardAPI = {
   leaderboard: (params) => api.get('/rewards/leaderboard', { params }),
   me: () => api.get('/rewards/me'),

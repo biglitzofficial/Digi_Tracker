@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Building2, CreditCard, Shield, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -122,6 +122,18 @@ export default function SuperAdmin() {
             <Icon className="w-4 h-4" /> {label}
           </button>
         ))}
+        <Link
+          to="/super-admin/business-analytics"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100"
+        >
+          All Businesses Analytics →
+        </Link>
+        <Link
+          to="/super-admin/staff-performance"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100"
+        >
+          Staff Performance Reports →
+        </Link>
       </div>
 
       {loading ? (

@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Package, BarChart3, Trophy,
   FileText, Settings, LogOut, Moon, Sun, Menu, X, TrendingUp,
-  ClipboardList, Shield, CalendarCheck,
+  ClipboardList, Shield, CalendarCheck, LineChart, UserCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -40,6 +40,8 @@ export default function Layout() {
   if (user?.role === 'super_admin') {
     navItems = [
       ...ownerNavItems.slice(0, -1),
+      { to: '/super-admin/business-analytics', icon: LineChart, label: 'All Businesses' },
+      { to: '/super-admin/staff-performance', icon: UserCheck, label: 'Staff Reports' },
       { to: '/super-admin', icon: Shield, label: 'Super Admin' },
       ownerNavItems[ownerNavItems.length - 1],
     ];
