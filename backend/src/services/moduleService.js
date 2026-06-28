@@ -3,6 +3,28 @@ const moduleRepository = require('../repositories/moduleRepository');
 const { seedDefaultModules } = require('../seeds/defaultModules');
 const AppError = require('../utils/AppError');
 
+const NUMERIC_FIELD_TYPES = ['number', 'currency', 'percentage'];
+
+function normalizeField(field, index) {
+  const normalized = {
+    ...field,
+    slug: field.slug || slugify(field.name, { lower: true, strict: true }),
+    order: field.order ?? index,
+  };
+
+  if (NUMERIC_FIELD_TYPES.includes(field.type)) {
+    if (field.openingBalance === '' || field.openingBalance == null) {
+      delete normalized.openingBalance;
+    } else {
+      normalized.openingBalance = parseFloat(field.openingBalance);
+    }
+  } else {
+    delete normalized.openingBalance;
+  }
+
+  return normalized;
+}
+
 class ModuleService {
   async list(businessId, query = {}) {
     const modules = await moduleRepository.findByBusiness(businessId, {});
@@ -28,11 +50,7 @@ class ModuleService {
     const existing = await moduleRepository.findBySlug(businessId, slug);
     if (existing) throw new AppError('Module with this name already exists', 409);
 
-    const fields = data.fields.map((field, index) => ({
-      ...field,
-      slug: field.slug || slugify(field.name, { lower: true, strict: true }),
-      order: field.order ?? index,
-    }));
+    const fields = data.fields.map((field, index) => normalizeField(field, index));
 
     return moduleRepository.create({
       businessId,
@@ -52,11 +70,7 @@ class ModuleService {
     const mod = await this.getById(businessId, moduleId);
 
     if (data.fields) {
-      data.fields = data.fields.map((field, index) => ({
-        ...field,
-        slug: field.slug || slugify(field.name, { lower: true, strict: true }),
-        order: field.order ?? index,
-      }));
+      data.fields = data.fields.map((field, index) => normalizeField(field, index));
     }
 
     if (data.name && data.name !== mod.name) {

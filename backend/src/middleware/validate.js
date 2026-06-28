@@ -38,7 +38,9 @@ const fieldSchema = Joi.object({
   required: Joi.boolean().default(false),
   options: Joi.array().items(Joi.string().allow('')).default([]),
   defaultValue: Joi.any().optional(),
+  openingBalance: Joi.alternatives().try(Joi.valid(null, ''), Joi.number().min(0)).optional(),
   order: Joi.number().default(0),
+  isActive: Joi.boolean().optional(),
 });
 
 const schemas = {

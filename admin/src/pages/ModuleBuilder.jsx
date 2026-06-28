@@ -6,8 +6,9 @@ import { moduleAPI } from '../services/api';
 import { parseApiError } from '../utils/apiError';
 
 const FIELD_TYPES = ['number', 'text', 'date', 'dropdown', 'boolean', 'currency', 'percentage'];
+const NUMERIC_TYPES = ['number', 'currency', 'percentage'];
 
-const emptyField = () => ({ name: '', type: 'number', required: false, options: [], order: 0 });
+const emptyField = () => ({ name: '', type: 'number', required: false, options: [], order: 0, openingBalance: '' });
 
 export default function ModuleBuilder() {
   const { id } = useParams();
@@ -32,6 +33,7 @@ export default function ModuleBuilder() {
           fields: mod.fields.map((f) => ({
             name: f.name, type: f.type, required: f.required,
             options: f.options || [], order: f.order,
+            openingBalance: f.openingBalance ?? '',
           })),
         });
       });
@@ -157,6 +159,20 @@ export default function ModuleBuilder() {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+                  {NUMERIC_TYPES.includes(field.type) && (
+                    <div className="md:col-span-3">
+                      <label className="text-xs font-medium text-gray-500">Opening Balance</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="any"
+                        className="input mt-1 max-w-xs"
+                        value={field.openingBalance ?? ''}
+                        onChange={(e) => updateField(index, 'openingBalance', e.target.value)}
+                        placeholder="Starting value before tracking (optional)"
+                      />
+                    </div>
+                  )}
                   {field.type === 'dropdown' && (
                     <div className="md:col-span-3">
                       <label className="text-xs font-medium text-gray-500">Options (comma-separated)</label>

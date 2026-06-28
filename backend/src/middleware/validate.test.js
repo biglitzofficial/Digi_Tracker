@@ -127,6 +127,24 @@ describe('API validation schemas', () => {
       });
       expect(error).toBeUndefined();
     });
+
+    it('accepts openingBalance on numeric fields', () => {
+      const { error } = validateSchema(schemas.createModule, {
+        name: 'Instagram',
+        description: '',
+        fields: [{ name: 'Followers', type: 'number', openingBalance: 5000 }],
+      });
+      expect(error).toBeUndefined();
+    });
+
+    it('accepts empty openingBalance', () => {
+      const { error } = validateSchema(schemas.createModule, {
+        name: 'Instagram',
+        description: '',
+        fields: [{ name: 'Followers', type: 'number', openingBalance: '' }],
+      });
+      expect(error).toBeUndefined();
+    });
   });
 
   describe('createBusiness', () => {

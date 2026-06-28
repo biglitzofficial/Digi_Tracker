@@ -70,7 +70,12 @@ class AnalyticsService {
       const field = this._getPrimaryNumericField(chartModule);
       if (field) {
         const moduleEntries = entries.filter((e) => String(e.moduleId) === String(chartModule._id));
-        chartData = this._buildGrowthSeries(moduleEntries, field.slug, 'daily');
+        chartData = this._buildGrowthSeries(
+          moduleEntries,
+          field.slug,
+          'daily',
+          this._getOpeningBalance(chartModule, field.slug)
+        );
       }
     }
 
@@ -121,8 +126,9 @@ class AnalyticsService {
     );
 
     const periods = this._groupByPeriod(entries, fieldSlug, period);
+    const openingBalance = this._getOpeningBalance(mod, fieldSlug);
     const data = [];
-    let previousValue = null;
+    let previousValue = openingBalance;
 
     for (const [label, value] of periods) {
       const growth = previousValue !== null ? calculateGrowth(value, previousValue) : 0;
@@ -131,16 +137,21 @@ class AnalyticsService {
       previousValue = value;
     }
 
+    const baseline = openingBalance ?? (data[0]?.value ?? 0);
     const growthValues = data.filter((d) => d.growth !== 0).map((d) => d.growth);
     const summary = {
+      openingBalance,
       averageGrowth: growthValues.length
         ? parseFloat((growthValues.reduce((a, b) => a + b, 0) / growthValues.length).toFixed(2))
         : 0,
-      totalGrowth: data.length >= 2
-        ? calculateGrowth(data[data.length - 1].value, data[0].value)
+      totalGrowth: data.length >= 1
+        ? calculateGrowth(data[data.length - 1].value, baseline)
         : 0,
-      highestValue: Math.max(...data.map((d) => d.value), 0),
-      lowestValue: Math.min(...data.map((d) => d.value), 0),
+      growthFromOpening: openingBalance != null && data.length >= 1
+        ? calculateGrowth(data[data.length - 1].value, openingBalance)
+        : null,
+      highestValue: Math.max(...data.map((d) => d.value), openingBalance ?? 0),
+      lowestValue: Math.min(...data.map((d) => d.value), openingBalance ?? 0),
     };
 
     return { module: { id: mod._id, name: mod.name }, fieldSlug, period, data, summary };
@@ -231,10 +242,17 @@ class AnalyticsService {
     );
   }
 
-  _buildGrowthSeries(entries, fieldSlug, period) {
+  _getOpeningBalance(mod, fieldSlug) {
+    const field = mod.fields?.find((f) => f.slug === fieldSlug);
+    if (field?.openingBalance == null || field.openingBalance === '') return null;
+    const value = parseFloat(field.openingBalance);
+    return Number.isNaN(value) ? null : value;
+  }
+
+  _buildGrowthSeries(entries, fieldSlug, period, openingBalance = null) {
     const periods = this._groupByPeriod(entries, fieldSlug, period);
     const data = [];
-    let previousValue = null;
+    let previousValue = openingBalance;
 
     for (const [label, value] of periods) {
       const growth = previousValue !== null ? calculateGrowth(value, previousValue) : 0;
@@ -275,7 +293,12 @@ class AnalyticsService {
       if (!field) continue;
 
       const modEntries = entries.filter((e) => String(e.moduleId) === String(mod._id));
-      const series = this._buildGrowthSeries(modEntries, field.slug, periodType);
+      const series = this._buildGrowthSeries(
+        modEntries,
+        field.slug,
+        periodType,
+        this._getOpeningBalance(mod, field.slug)
+      );
       for (const item of series) {
         if (item.growth > bestGrowth) {
           bestGrowth = item.growth;

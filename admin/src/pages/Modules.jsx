@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Plus, Package, Trash2 } from 'lucide-react';
+import { Plus, Package, Trash2, Scale } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { moduleAPI } from '../services/api';
 import { parseApiError } from '../utils/apiError';
+import OpeningBalanceModal from '../components/OpeningBalanceModal';
 
 const iconMap = {
   instagram: '📸',
@@ -21,6 +22,7 @@ export default function Modules() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [seeding, setSeeding] = useState(false);
+  const [balanceModule, setBalanceModule] = useState(null);
   const location = useLocation();
 
   const loadModules = () => {
@@ -126,7 +128,15 @@ export default function Modules() {
                   <span className="text-xs text-gray-400">+{mod.fields.length - 4} more</span>
                 )}
               </div>
-              <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBalanceModule({ id: mod._id, name: mod.name })}
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 font-medium flex items-center gap-1"
+                >
+                  <Scale className="w-3.5 h-3.5" /> Set Opening Balances
+                </button>
+                <div className="flex items-center justify-between gap-3">
                 <Link to={`/modules/${mod._id}/edit`} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                   Edit Module →
                 </Link>
@@ -139,6 +149,7 @@ export default function Modules() {
                   <Trash2 className="w-4 h-4" />
                   {deletingId === mod._id ? 'Deleting...' : 'Delete'}
                 </button>
+                </div>
               </div>
             </div>
           ))}
@@ -150,6 +161,15 @@ export default function Modules() {
           <Package className="w-12 h-12 text-gray-300 mx-auto" />
           <p className="mt-4 text-gray-500">No modules yet. Create your first tracking module.</p>
         </div>
+      )}
+
+      {balanceModule && (
+        <OpeningBalanceModal
+          moduleId={balanceModule.id}
+          moduleName={balanceModule.name}
+          onClose={() => setBalanceModule(null)}
+          onSaved={loadModules}
+        />
       )}
     </div>
   );
