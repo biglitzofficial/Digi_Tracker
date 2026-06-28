@@ -4,9 +4,14 @@ const AppError = require('../utils/AppError');
 
 class ModuleService {
   async list(businessId, query = {}) {
-    const filters = {};
-    if (query.isActive !== undefined) filters.isActive = query.isActive === 'true';
-    return moduleRepository.findByBusiness(businessId, filters);
+    const modules = await moduleRepository.findByBusiness(businessId, {});
+
+    const wantActive = query.isActive === 'true' || query.isActive === true;
+    const wantInactive = query.isActive === 'false' || query.isActive === false;
+
+    if (wantActive) return modules.filter((m) => m.isActive !== false);
+    if (wantInactive) return modules.filter((m) => m.isActive === false);
+    return modules;
   }
 
   async getById(businessId, moduleId) {
