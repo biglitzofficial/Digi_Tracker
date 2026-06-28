@@ -17,8 +17,7 @@ const registerFcmToken = asyncHandler(async (req, res) => {
 });
 
 const listUsers = asyncHandler(async (req, res) => {
-  const businessId = req.user.role === 'super_admin' ? req.query.businessId : req.businessId;
-  const result = await userService.listStaff(businessId, req.query);
+  const result = await userService.listStaff(req.businessId, req.query);
   sendPaginated(res, result.users, {
     total: result.total, page: result.page, limit: result.limit, pages: result.pages,
   });
@@ -35,7 +34,7 @@ const updateUser = asyncHandler(async (req, res) => {
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
-  await userService.deactivateStaff(req.businessId, req.params.id);
+  await userService.deactivateStaff(req.businessId, req.params.id, req.user.role);
   sendSuccess(res, null, 'Staff member deactivated');
 });
 

@@ -1,5 +1,6 @@
 const { verifyAccessToken } = require('../utils/tokens');
 const userRepository = require('../repositories/userRepository');
+const businessRepository = require('../repositories/businessRepository');
 const { sanitizeUser } = require('../db/userHelpers');
 const AppError = require('../utils/AppError');
 
@@ -29,49 +30,39 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+/** Super admin can perform any authorized action. */
 const authorize = (...roles) => (req, res, next) => {
+  if (req.user.role === 'super_admin') return next();
   if (!roles.includes(req.user.role)) {
     return next(new AppError('Insufficient permissions', 403));
   }
   next();
 };
 
-const resolveBusinessContext = async (req, res, next) => {
+async function resolveSuperAdminBusinessId(req) {
+  const explicitId = req.query.businessId || req.body?.businessId;
+  if (explicitId) return String(explicitId);
+
+  const { businesses } = await businessRepository.findAll({}, 1, 100);
+  if (businesses.length >= 1) return String(businesses[0]._id);
+  return null;
+}
+
+const tenantScope = async (req, res, next) => {
   try {
-    if (req.user.role !== 'super_admin') {
-      if (!req.businessId) return next(new AppError('No business context', 403));
-      req.contextBusinessId = req.businessId;
+    if (req.user.role === 'super_admin') {
+      const resolved = await resolveSuperAdminBusinessId(req);
+      if (resolved) req.businessId = resolved;
+      req.tenantFilter = req.businessId ? { businessId: req.businessId } : {};
       return next();
     }
 
-    const explicitId = req.query.businessId || req.body?.businessId;
-    if (explicitId) {
-      req.contextBusinessId = String(explicitId);
-      return next();
-    }
-
-    const businessRepository = require('../repositories/businessRepository');
-    const { businesses } = await businessRepository.findAll({}, 1, 1);
-    if (businesses.length === 1) {
-      req.contextBusinessId = String(businesses[0]._id);
-      return next();
-    }
-
-    return next(new AppError('businessId required for super admin', 400));
+    if (!req.businessId) return next(new AppError('No business context', 403));
+    req.tenantFilter = { businessId: req.businessId };
+    next();
   } catch (error) {
     next(error);
   }
 };
 
-const tenantScope = (req, res, next) => {
-  if (req.user.role === 'super_admin') {
-    req.tenantFilter = req.query.businessId ? { businessId: req.query.businessId } : {};
-  } else if (req.businessId) {
-    req.tenantFilter = { businessId: req.businessId };
-  } else {
-    return next(new AppError('No business context', 403));
-  }
-  next();
-};
-
-module.exports = { authenticate, authorize, tenantScope, resolveBusinessContext };
+module.exports = { authenticate, authorize, tenantScope };

@@ -52,12 +52,12 @@ class UserService {
     return userRepository.update(staffId, update);
   }
 
-  async deactivateStaff(businessId, staffId) {
+  async deactivateStaff(businessId, staffId, actorRole) {
     const user = await userRepository.findById(staffId);
     if (!user || user.businessId?.toString() !== businessId) {
       throw new AppError('Staff member not found', 404);
     }
-    if (user.role === 'business_owner') {
+    if (user.role === 'business_owner' && actorRole !== 'super_admin') {
       throw new AppError('Cannot deactivate business owner', 403);
     }
     return userRepository.update(staffId, { isActive: false });
