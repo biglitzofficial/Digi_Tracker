@@ -69,17 +69,37 @@ export default function Staff() {
     }
   };
 
+  const activeStaffCount = staff.filter((s) => s.role === 'staff' && s.isActive !== false).length;
+  const staffLimitReached = activeStaffCount >= 1;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Staff Management</h1>
-          <p className="text-gray-500">Manage your team members</p>
+          <p className="text-gray-500">Each business can have one staff member for daily entries</p>
         </div>
-        <button className="btn-primary flex items-center gap-2" onClick={() => { setEditUser(null); setForm({ email: '', password: '', firstName: '', lastName: '', phone: '' }); setShowModal(true); }}>
+        <button
+          type="button"
+          className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={staffLimitReached}
+          title={staffLimitReached ? 'Deactivate the current staff member to add a new one' : undefined}
+          onClick={() => {
+            if (staffLimitReached) return;
+            setEditUser(null);
+            setForm({ email: '', password: '', firstName: '', lastName: '', phone: '' });
+            setShowModal(true);
+          }}
+        >
           <Plus className="w-4 h-4" /> Add Staff
         </button>
       </div>
+
+      {staffLimitReached && (
+        <p className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 rounded-lg">
+          Staff limit reached (1 per business). Deactivate the current staff member to replace them.
+        </p>
+      )}
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -115,16 +135,14 @@ export default function Staff() {
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  {s.role !== 'business_owner' && (
-                    <div className="flex gap-2">
-                      <button onClick={() => openEdit(s)} className="text-primary-600 hover:text-primary-700 text-xs font-medium">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDeactivate(s._id)} className="text-red-500 hover:text-red-700 text-xs font-medium">
-                        Deactivate
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <button onClick={() => openEdit(s)} className="text-primary-600 hover:text-primary-700 text-xs font-medium">
+                      Edit
+                    </button>
+                    <button onClick={() => handleDeactivate(s._id)} className="text-red-500 hover:text-red-700 text-xs font-medium">
+                      Deactivate
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

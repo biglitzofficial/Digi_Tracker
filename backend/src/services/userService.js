@@ -1,6 +1,9 @@
 const userRepository = require('../repositories/userRepository');
 const AppError = require('../utils/AppError');
 
+/** Each business is limited to one active staff account. */
+const MAX_STAFF_PER_BUSINESS = 1;
+
 class UserService {
   async getProfile(userId) {
     const user = await userRepository.findById(userId);
@@ -17,7 +20,7 @@ class UserService {
 
   async listStaff(businessId, query = {}) {
     const { page = 1, limit = 20, search, isActive } = query;
-    const filters = { role: { $in: ['staff', 'business_owner'] } };
+    const filters = { role: 'staff' };
     if (isActive !== undefined) filters.isActive = isActive === 'true';
     if (search) {
       filters.$or = [
@@ -32,6 +35,19 @@ class UserService {
   async createStaff(businessId, data) {
     const existing = await userRepository.findByEmail(data.email);
     if (existing) throw new AppError('Email already registered', 409);
+
+    const { total: activeStaff } = await userRepository.findByBusiness(
+      businessId,
+      { role: 'staff', isActive: true },
+      1,
+      1
+    );
+    if (activeStaff >= MAX_STAFF_PER_BUSINESS) {
+      throw new AppError(
+        'Each business can only have one staff member. Deactivate the existing staff member before adding a new one.',
+        409
+      );
+    }
 
     return userRepository.create({
       ...data,
@@ -65,3 +81,4 @@ class UserService {
 }
 
 module.exports = new UserService();
+module.exports.MAX_STAFF_PER_BUSINESS = MAX_STAFF_PER_BUSINESS;

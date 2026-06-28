@@ -103,7 +103,7 @@ export default function Onboarding() {
           {step === 2 && (
             <div className="space-y-4 text-center">
               <h2 className="text-xl font-bold">Invite your team</h2>
-              <p className="text-gray-500">You can add staff members from the Staff page after setup.</p>
+              <p className="text-gray-500">You can add your staff member from the Staff page after setup.</p>
               <div className="flex gap-3">
                 <button className="btn-secondary flex-1" onClick={() => setStep(1)}>Back</button>
                 <button className="btn-primary flex-1" onClick={() => setStep(3)}>Skip for now</button>
