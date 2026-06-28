@@ -9,10 +9,23 @@ const { errorHandler } = require('./utils/helpers');
 
 const app = express();
 
+function getAllowedOrigins() {
+  const origins = [...config.cors.origin];
+  if (config.appUrl) {
+    try {
+      const appOrigin = new URL(config.appUrl).origin;
+      if (!origins.includes(appOrigin)) origins.push(appOrigin);
+    } catch {
+      // ignore invalid APP_URL
+    }
+  }
+  return origins;
+}
+
 function isOriginAllowed(origin) {
   if (!origin) return true;
 
-  const allowed = config.cors.origin;
+  const allowed = getAllowedOrigins();
   if (allowed.includes(origin)) return true;
 
   const domain = config.cors.allowedDomain;
@@ -40,7 +53,10 @@ const corsOptions = {
     if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    if (config.env === 'production' && origin) {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+    }
+    return callback(null, false);
   },
   credentials: true,
 };
