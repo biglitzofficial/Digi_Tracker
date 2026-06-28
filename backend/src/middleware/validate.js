@@ -106,7 +106,7 @@ const schemas = {
         value: Joi.any().required(),
       })
     ).min(1).required(),
-    notes: Joi.string().default(''),
+    notes: Joi.string().allow('').default(''),
   }),
 
   generateReport: Joi.object({

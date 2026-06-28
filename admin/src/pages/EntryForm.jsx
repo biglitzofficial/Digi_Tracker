@@ -14,7 +14,13 @@ const iconMap = {
   'google-my-business': '📍',
 };
 
-function todayISO() {
+function parseApiError(err) {
+  const data = err.response?.data;
+  if (data?.errors?.length) {
+    return data.errors.map((e) => e.message).join('. ');
+  }
+  return data?.message || 'Failed to save entry';
+}
   return new Date().toISOString().slice(0, 10);
 }
 
@@ -98,9 +104,10 @@ function FieldInput({ field, value, onChange }) {
         <input
           type={isNumeric ? 'number' : 'text'}
           step={isNumeric ? 'any' : undefined}
+          min={isNumeric ? 0 : undefined}
           className={`input ${field.type === 'currency' ? 'pl-7' : ''}`}
           value={value ?? ''}
-          onChange={(e) => onChange(isNumeric ? e.target.value : e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           required={field.required}
         />
       </div>
@@ -155,31 +162,58 @@ export default function EntryForm() {
     e.preventDefault();
     if (!module) return;
 
-    const values = activeFields.map((field) => {
-      let value = fieldValues[field.slug];
-      if (['number', 'currency', 'percentage'].includes(field.type)) {
-        value = value === '' || value == null ? 0 : parseFloat(value);
+    const values = [];
+    for (const field of activeFields) {
+      let raw = fieldValues[field.slug];
+      const isNumeric = ['number', 'currency', 'percentage'].includes(field.type);
+
+      if (isNumeric) {
+        if (raw === '' || raw == null) {
+          if (field.required) {
+            toast.error(`"${field.name}" is required`);
+            return;
+          }
+          raw = 0;
+        } else {
+          raw = parseFloat(raw);
+          if (Number.isNaN(raw)) {
+            toast.error(`"${field.name}" must be a number`);
+            return;
+          }
+          if (raw < 0) {
+            toast.error(`"${field.name}" cannot be negative`);
+            return;
+          }
+          if (field.type === 'percentage' && raw > 100) {
+            toast.error(`"${field.name}" cannot exceed 100%`);
+            return;
+          }
+        }
+      } else if (field.required && (raw === '' || raw == null)) {
+        toast.error(`"${field.name}" is required`);
+        return;
       }
-      return { fieldSlug: field.slug, value };
-    });
+
+      values.push({ fieldSlug: field.slug, value: isNumeric ? raw : raw ?? '' });
+    }
 
     setSubmitting(true);
     try {
+      const payload = { values, notes: notes.trim() };
       if (isEdit) {
-        await entryAPI.update(entryId, { values, notes });
+        await entryAPI.update(entryId, payload);
         toast.success('Entry updated');
       } else {
         await entryAPI.create({
           moduleId: module._id,
           entryDate,
-          values,
-          notes,
+          ...payload,
         });
         toast.success('Entry submitted');
       }
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save entry');
+      toast.error(parseApiError(err));
     } finally {
       setSubmitting(false);
     }
