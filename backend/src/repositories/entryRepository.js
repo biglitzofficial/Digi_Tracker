@@ -65,6 +65,14 @@ class EntryRepository {
     }, { sortField: 'entryDate', sortDir: 'asc' });
   }
 
+  /** Raw entries for analytics — no per-entry population (much faster). */
+  async findByBusinessDateRange(businessId, startDate, endDate) {
+    return store.findAll(COLLECTIONS.entries, {
+      businessId: String(businessId),
+      entryDate: { $gte: startDate, $lte: endDate },
+    }, { sortField: 'entryDate', sortDir: 'asc' });
+  }
+
   async findByUser(businessId, userId, page = 1, limit = 20) {
     return this.findByBusiness(String(businessId), { userId: String(userId) }, page, limit);
   }

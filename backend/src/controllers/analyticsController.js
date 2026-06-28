@@ -21,4 +21,9 @@ const getChartData = asyncHandler(async (req, res) => {
   sendSuccess(res, data);
 });
 
-module.exports = { getDashboard, getGrowth, getInsights, getChartData };
+const getOverview = asyncHandler(async (req, res) => {
+  const data = await analyticsService.getOverview(req.businessId);
+  sendSuccess(res, data);
+});
+
+module.exports = { getDashboard, getGrowth, getInsights, getChartData, getOverview };

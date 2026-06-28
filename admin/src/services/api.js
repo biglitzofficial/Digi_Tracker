@@ -84,6 +84,7 @@ export const planAPI = {
 };
 
 export const analyticsAPI = {
+  overview: () => api.get('/analytics/overview'),
   dashboard: () => api.get('/analytics/dashboard'),
   growth: (params) => api.get('/analytics/growth', { params }),
   insights: () => api.get('/analytics/insights'),

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Package, Users, FileText, TrendingUp, TrendingDown } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import KpiCard from '../components/KpiCard';
-import { analyticsAPI, moduleAPI, rewardAPI } from '../services/api';
+import { analyticsAPI } from '../services/api';
 
 export default function Dashboard() {
   const [dashboard, setDashboard] = useState(null);
@@ -12,50 +12,36 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [dashRes, insightsRes, modulesRes, lbRes] = await Promise.all([
-          analyticsAPI.dashboard(),
-          analyticsAPI.insights(),
-          moduleAPI.list({ isActive: true }),
-          rewardAPI.leaderboard({ period: 'monthly' }),
-        ]);
-        setDashboard(dashRes.data.data);
-        setInsights(insightsRes.data.data);
-        setLeaderboard(lbRes.data.data.leaderboard || []);
-
-        const modules = modulesRes.data.data;
-        if (modules.length > 0) {
-          const ig = modules.find((m) => m.slug === 'instagram') || modules[0];
-          const numericField = ig.fields?.find((f) => f.type === 'number');
-          if (numericField) {
-            const chartRes = await analyticsAPI.charts(ig._id, {
-              fieldSlug: numericField.slug,
-              chartType: 'line',
-              period: 'daily',
-              months: 1,
-            });
-            setChartData(chartRes.data.data.data || []);
-          }
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    analyticsAPI.overview()
+      .then(({ data }) => {
+        setDashboard(data.data.dashboard);
+        setInsights(data.data.insights);
+        setChartData(data.data.chartData || []);
+        setLeaderboard(data.data.leaderboard || []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="card p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-3" />
-          </div>
-        ))}
+      <div className="space-y-6">
+        <div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-56 mt-2 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="card p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-3" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 card p-6 animate-pulse h-80" />
+          <div className="card p-6 animate-pulse h-80" />
+        </div>
       </div>
     );
   }
