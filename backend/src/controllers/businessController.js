@@ -23,4 +23,9 @@ const getBusiness = asyncHandler(async (req, res) => {
   sendSuccess(res, business);
 });
 
-module.exports = { getMyBusiness, updateMyBusiness, listBusinesses, getBusiness };
+const createBusiness = asyncHandler(async (req, res) => {
+  const result = await businessService.create(req.body);
+  sendSuccess(res, result, 'Business created with default modules', 201);
+});
+
+module.exports = { getMyBusiness, updateMyBusiness, listBusinesses, getBusiness, createBusiness };

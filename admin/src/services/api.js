@@ -10,6 +10,18 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  const role = localStorage.getItem('userRole');
+  const activeBusinessId = localStorage.getItem('activeBusinessId');
+  const isCreateBusiness = config.method === 'post' && /\/businesses\/?$/.test(config.url || '');
+
+  if (role === 'super_admin' && activeBusinessId && !isCreateBusiness) {
+    config.params = { ...config.params, businessId: activeBusinessId };
+    if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
+      config.data = { ...config.data, businessId: activeBusinessId };
+    }
+  }
+
   return config;
 });
 
@@ -58,6 +70,7 @@ export const businessAPI = {
   update: (data) => api.put('/businesses/me', data),
   list: () => api.get('/businesses'),
   get: (id) => api.get(`/businesses/${id}`),
+  create: (data) => api.post('/businesses', data),
 };
 
 export const moduleAPI = {

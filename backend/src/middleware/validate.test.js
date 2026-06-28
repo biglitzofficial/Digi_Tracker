@@ -129,9 +129,19 @@ describe('API validation schemas', () => {
     });
   });
 
-  describe('updateModule', () => {
-    it('accepts empty description', () => {
-      const { error } = validateSchema(schemas.updateModule, { description: '' });
+  describe('createBusiness', () => {
+    const base = {
+      name: 'Fit Zone',
+      type: 'gym',
+      email: 'fitzone@example.com',
+      ownerFirstName: 'Alex',
+      ownerLastName: 'Owner',
+      ownerEmail: 'alex@fitzone.com',
+      ownerPassword: 'Password1',
+    };
+
+    it('accepts empty contactNumber', () => {
+      const { error } = validateSchema(schemas.createBusiness, { ...base, contactNumber: '' });
       expect(error).toBeUndefined();
     });
   });

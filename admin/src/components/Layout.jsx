@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import GlobalSearch from './GlobalSearch';
+import BusinessSwitcher from './BusinessSwitcher';
 import { canManageBusiness } from '../utils/permissions';
 
 const ownerNavItems = [
@@ -96,7 +97,9 @@ export default function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           {isManager && <GlobalSearch />}
-          {!isManager && <div className="flex-1" />}
+          {user?.role === 'super_admin' && <BusinessSwitcher />}
+          {!isManager && user?.role !== 'super_admin' && <div className="flex-1" />}
+          {isManager && user?.role !== 'super_admin' && <div className="flex-1" />}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <button onClick={toggle} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
               {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}

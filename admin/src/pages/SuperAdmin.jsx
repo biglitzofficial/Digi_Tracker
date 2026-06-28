@@ -1,11 +1,29 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Building2, CreditCard, Shield } from 'lucide-react';
+import { Building2, CreditCard, Shield, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { businessAPI, planAPI } from '../services/api';
 import { parseApiError } from '../utils/apiError';
+import { setActiveBusinessId } from '../components/BusinessSwitcher';
 import EmptyState from '../components/EmptyState';
+
+const emptyForm = () => ({
+  name: '',
+  type: 'gym',
+  email: '',
+  contactNumber: '',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  ownerFirstName: '',
+  ownerLastName: '',
+  ownerEmail: '',
+  ownerPassword: '',
+});
+
+const BUSINESS_TYPES = [
+  'gym', 'fitness_center', 'restaurant', 'real_estate', 'digital_marketing',
+  'coaching', 'salon', 'clinic', 'retail', 'other',
+];
 
 export default function SuperAdmin() {
   const { user, loading: authLoading } = useAuth();
@@ -14,27 +32,29 @@ export default function SuperAdmin() {
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyForm());
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [bizRes, planRes, subRes] = await Promise.all([
-          businessAPI.list(),
-          planAPI.list(),
-          planAPI.listSubscriptions(),
-        ]);
-        setBusinesses(bizRes.data.data);
-        setPlans(planRes.data.data);
-        setSubscriptions(subRes.data.data);
-      } catch {
-        toast.error('Failed to load super admin data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [bizRes, planRes, subRes] = await Promise.all([
+        businessAPI.list(),
+        planAPI.list(),
+        planAPI.listSubscriptions(),
+      ]);
+      setBusinesses(bizRes.data.data);
+      setPlans(planRes.data.data);
+      setSubscriptions(subRes.data.data);
+    } catch {
+      toast.error('Failed to load super admin data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
 
   const handleSubscriptionUpdate = async (businessId, status) => {
     try {
@@ -45,6 +65,28 @@ export default function SuperAdmin() {
     } catch (err) {
       toast.error(parseApiError(err, 'Update failed'));
     }
+  };
+
+  const handleCreateBusiness = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const { data } = await businessAPI.create(form);
+      toast.success(data.message || 'Business created with default modules');
+      setShowModal(false);
+      setActiveBusinessId(data.data.business._id);
+      window.location.reload();
+    } catch (err) {
+      toast.error(parseApiError(err, 'Failed to create business'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const selectBusiness = (id) => {
+    setActiveBusinessId(id);
+    toast.success('Business selected — reload to manage it');
+    window.location.reload();
   };
 
   const tabs = [
@@ -58,9 +100,16 @@ export default function SuperAdmin() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Super Admin</h1>
-        <p className="text-gray-500">Manage businesses, plans, and subscriptions</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Super Admin</h1>
+          <p className="text-gray-500">Add businesses — each gets its own modules, staff, and data</p>
+        </div>
+        {tab === 'businesses' && (
+          <button type="button" className="btn-primary flex items-center gap-2" onClick={() => setShowModal(true)}>
+            <Plus className="w-4 h-4" /> Add Business
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -80,7 +129,11 @@ export default function SuperAdmin() {
       ) : tab === 'businesses' ? (
         <div className="card overflow-hidden">
           {businesses.length === 0 ? (
-            <EmptyState icon={Building2} title="No businesses" subtitle="Registered businesses will appear here" />
+            <EmptyState
+              icon={Building2}
+              title="No businesses yet"
+              subtitle='Click "Add Business" to create one with default modules (Instagram, WhatsApp, YouTube, etc.)'
+            />
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800/50">
@@ -90,16 +143,26 @@ export default function SuperAdmin() {
                   <th className="px-6 py-3">Email</th>
                   <th className="px-6 py-3">Timezone</th>
                   <th className="px-6 py-3">Created</th>
+                  <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {businesses.map((b) => (
                   <tr key={b._id} className="border-t border-gray-100 dark:border-gray-800">
                     <td className="px-6 py-4 font-medium">{b.name}</td>
-                    <td className="px-6 py-4 capitalize">{b.type}</td>
+                    <td className="px-6 py-4 capitalize">{b.type?.replace('_', ' ')}</td>
                     <td className="px-6 py-4 text-gray-500">{b.email}</td>
                     <td className="px-6 py-4 text-gray-500">{b.timezone}</td>
                     <td className="px-6 py-4 text-gray-500">{new Date(b.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                        onClick={() => selectBusiness(b._id)}
+                      >
+                        Manage →
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -161,6 +224,69 @@ export default function SuperAdmin() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+          <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-1">Add Business</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Creates the business, owner login, 14-day trial, and all default tracking modules.
+            </p>
+            <form onSubmit={handleCreateBusiness} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Business Name *</label>
+                <input className="input mt-1" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Business Type *</label>
+                <select className="input mt-1" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                  {BUSINESS_TYPES.map((t) => (
+                    <option key={t} value={t}>{t.replace('_', ' ')}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Business Email *</label>
+                <input type="email" className="input mt-1" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Contact Number</label>
+                <input className="input mt-1" value={form.contactNumber} onChange={(e) => setForm({ ...form, contactNumber: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Timezone</label>
+                <input className="input mt-1" value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} />
+              </div>
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Owner Account</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">First Name *</label>
+                  <input className="input mt-1" required value={form.ownerFirstName} onChange={(e) => setForm({ ...form, ownerFirstName: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Last Name *</label>
+                  <input className="input mt-1" required value={form.ownerLastName} onChange={(e) => setForm({ ...form, ownerLastName: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Owner Email *</label>
+                <input type="email" className="input mt-1" required value={form.ownerEmail} onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Owner Password *</label>
+                <input type="password" className="input mt-1" required minLength={8} value={form.ownerPassword} onChange={(e) => setForm({ ...form, ownerPassword: e.target.value })} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" className="btn-secondary flex-1" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn-primary flex-1" disabled={saving}>
+                  {saving ? 'Creating...' : 'Create Business'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -14,6 +14,9 @@ export function AuthProvider({ children }) {
       if (!token) return;
       const { data } = await userAPI.getMe();
       setUser(data.data);
+      if (data.data?.role) {
+        localStorage.setItem('userRole', data.data.role);
+      }
     } catch {
       localStorage.clear();
     }
@@ -28,6 +31,7 @@ export function AuthProvider({ children }) {
     const { user, business, accessToken, refreshToken } = data.data;
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('userRole', user.role);
     setUser(user);
     setBusiness(business);
     return data.data;

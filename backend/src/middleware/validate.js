@@ -101,6 +101,18 @@ const schemas = {
     settings: Joi.object().optional(),
   }),
 
+  createBusiness: Joi.object({
+    name: Joi.string().trim().min(1).required(),
+    type: Joi.string().trim().min(1).required(),
+    email: Joi.string().email().required(),
+    contactNumber: optionalStr,
+    timezone: Joi.string().default('UTC'),
+    ownerFirstName: Joi.string().trim().min(1).required(),
+    ownerLastName: Joi.string().trim().min(1).required(),
+    ownerEmail: Joi.string().email().required(),
+    ownerPassword: Joi.string().min(8).required(),
+  }),
+
   createModule: Joi.object({
     name: Joi.string().trim().min(1).required(),
     description: defaultEmptyStr,
