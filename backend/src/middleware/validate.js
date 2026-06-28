@@ -80,16 +80,16 @@ const schemas = {
   }),
 
   createModule: Joi.object({
-    name: Joi.string().required(),
-    description: Joi.string().default(''),
+    name: Joi.string().trim().min(1).required(),
+    description: Joi.string().allow('').default(''),
     icon: Joi.string().default('chart-bar'),
     color: Joi.string().default('#6366F1'),
     fields: Joi.array().items(fieldSchema).min(1).required(),
   }),
 
   updateModule: Joi.object({
-    name: Joi.string().optional(),
-    description: Joi.string().optional(),
+    name: Joi.string().trim().min(1).optional(),
+    description: Joi.string().allow('').optional(),
     icon: Joi.string().optional(),
     color: Joi.string().optional(),
     fields: Joi.array().items(fieldSchema).optional(),

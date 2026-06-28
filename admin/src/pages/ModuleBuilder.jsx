@@ -68,7 +68,8 @@ export default function ModuleBuilder() {
       }
       navigate('/modules');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save module');
+      const details = err.response?.data?.errors?.map((e) => e.message).join(', ');
+      toast.error(details || err.response?.data?.message || 'Failed to save module');
     } finally {
       setLoading(false);
     }
