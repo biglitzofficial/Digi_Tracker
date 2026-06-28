@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics';
 import Rewards from './pages/Rewards';
 import Reports from './pages/Reports';
 import Entries from './pages/Entries';
+import EntryForm from './pages/EntryForm';
 import SuperAdmin from './pages/SuperAdmin';
 import Onboarding from './pages/Onboarding';
 import ForgotPassword from './pages/ForgotPassword';
@@ -48,6 +49,8 @@ export default function App() {
         <Route path="modules/new" element={<RoleRoute managerOnly><ModuleBuilder /></RoleRoute>} />
         <Route path="modules/:id/edit" element={<RoleRoute managerOnly><ModuleBuilder /></RoleRoute>} />
         <Route path="entries" element={<Entries />} />
+        <Route path="entries/new/:moduleId" element={<EntryForm />} />
+        <Route path="entries/:id/edit" element={<EntryForm />} />
         <Route path="analytics" element={<RoleRoute managerOnly><Analytics /></RoleRoute>} />
         <Route path="rewards" element={<Rewards />} />
         <Route path="reports" element={<RoleRoute managerOnly><Reports /></RoleRoute>} />

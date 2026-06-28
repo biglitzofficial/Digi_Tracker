@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Circle, Flame, Trophy, ClipboardList } from 'lucide-react';
+import { CheckCircle2, Circle, Flame, Trophy, ClipboardList, Pencil, Plus } from 'lucide-react';
 import { entryAPI, rewardAPI } from '../services/api';
 
 const iconMap = {
@@ -18,7 +18,8 @@ export default function StaffDashboard() {
   const [rewards, setRewards] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     Promise.all([entryAPI.todayStatus(), rewardAPI.me()])
       .then(([statusRes, rewardsRes]) => {
         setStatus(statusRes.data.data);
@@ -26,7 +27,9 @@ export default function StaffDashboard() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { load(); }, []);
 
   if (loading) {
     return (
@@ -99,9 +102,25 @@ export default function StaffDashboard() {
                   </p>
                 </div>
                 {mod.submitted ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                    <Link
+                      to={`/entries/${mod.entryId}/edit`}
+                      className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1 shrink-0"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Edit
+                    </Link>
+                  </>
                 ) : (
-                  <Circle className="w-5 h-5 text-gray-300 shrink-0" />
+                  <>
+                    <Circle className="w-5 h-5 text-gray-300 shrink-0 hidden sm:block" />
+                    <Link
+                      to={`/entries/new/${mod.moduleId}`}
+                      className="btn-primary text-sm py-1.5 px-3 flex items-center gap-1 shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Submit
+                    </Link>
+                  </>
                 )}
               </div>
             ))}
@@ -109,10 +128,6 @@ export default function StaffDashboard() {
         ) : (
           <p className="text-gray-500 text-sm">No active modules assigned yet.</p>
         )}
-
-        <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          Use the DigiTracker mobile app to submit and edit today&apos;s entries.
-        </p>
       </div>
     </div>
   );

@@ -71,6 +71,9 @@ export const moduleAPI = {
 
 export const entryAPI = {
   list: (params) => api.get('/entries', { params }),
+  get: (id) => api.get(`/entries/${id}`),
+  create: (data) => api.post('/entries', data),
+  update: (id, data) => api.put(`/entries/${id}`, data),
   myHistory: (params) => api.get('/entries/history/me', { params }),
   todayStatus: () => api.get('/entries/today/status'),
 };

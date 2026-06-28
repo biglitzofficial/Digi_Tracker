@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
-import { ClipboardList, History, Filter } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ClipboardList, History, Filter, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { entryAPI, auditLogAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { isStaff } from '../utils/permissions';
 import EmptyState from '../components/EmptyState';
+
+function isToday(dateStr) {
+  const d = new Date(dateStr);
+  const today = new Date();
+  return d.toDateString() === today.toDateString();
+}
 
 export default function Entries() {
   const { user } = useAuth();
@@ -85,7 +92,7 @@ export default function Entries() {
             <EmptyState
               icon={ClipboardList}
               title="No entries found"
-              subtitle={staffView ? 'Submit entries from the mobile app to see them here' : 'Entries will appear here once staff submit data'}
+              subtitle={staffView ? 'Submit entries from the Today page to see them here' : 'Entries will appear here once staff submit data'}
             />
           ) : (
             <div className="overflow-x-auto">
@@ -97,6 +104,7 @@ export default function Entries() {
                     <th className="px-6 py-3">Date</th>
                     <th className="px-6 py-3">Values</th>
                     <th className="px-6 py-3">Status</th>
+                    {staffView && <th className="px-6 py-3">Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +125,18 @@ export default function Entries() {
                           <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Original</span>
                         )}
                       </td>
+                      {staffView && (
+                        <td className="px-6 py-4">
+                          {isToday(e.entryDate) && (
+                            <Link
+                              to={`/entries/${e._id}/edit`}
+                              className="text-sm text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1"
+                            >
+                              <Pencil className="w-3.5 h-3.5" /> Edit
+                            </Link>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
