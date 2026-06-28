@@ -46,7 +46,7 @@ class UserService {
       throw new AppError('Staff member not found', 404);
     }
 
-    const allowed = ['firstName', 'lastName', 'phone', 'isActive'];
+    const allowed = ['firstName', 'lastName', 'phone', 'isActive', 'password'];
     const update = {};
     allowed.forEach((key) => { if (data[key] !== undefined) update[key] = data[key]; });
     return userRepository.update(staffId, update);

@@ -41,7 +41,8 @@ export default function Staff() {
       setForm({ email: '', password: '', firstName: '', lastName: '', phone: '' });
       loadStaff();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save staff');
+      const details = err.response?.data?.errors?.map((e) => e.message).join(', ');
+      toast.error(details || err.response?.data?.message || 'Failed to save staff');
     }
   };
 
