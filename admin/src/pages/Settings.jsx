@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { businessAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 export default function Settings() {
   const [business, setBusiness] = useState(null);
@@ -22,7 +23,7 @@ export default function Settings() {
       setBusiness(data.data);
       toast.success('Settings saved');
     } catch (err) {
-      toast.error('Failed to save settings');
+      toast.error(parseApiError(err, 'Failed to save settings'));
     } finally {
       setSaving(false);
     }

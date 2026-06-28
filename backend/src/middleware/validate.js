@@ -1,21 +1,42 @@
 const Joi = require('joi');
 
+/** Joi string that accepts empty string (forms often send "" for optional fields). */
+const emptyStr = Joi.string().allow('');
+const optionalStr = emptyStr.optional();
+const defaultEmptyStr = emptyStr.default('');
+
+const entryValueSchema = Joi.object({
+  fieldSlug: Joi.string().required(),
+  value: Joi.alternatives().try(
+    Joi.boolean(),
+    Joi.number(),
+    emptyStr,
+    Joi.date(),
+  ).required(),
+});
+
 const validate = (schema) => (req, res, next) => {
   const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
   if (error) {
-    const errors = error.details.map((d) => ({ field: d.path.join('.'), message: d.message }));
-    return res.status(400).json({ success: false, message: 'Validation error', errors });
+    const errors = error.details.map((d) => ({
+      field: d.path.join('.'),
+      message: d.message.replace(/"/g, ''),
+    }));
+    const message = errors.length === 1
+      ? errors[0].message
+      : errors.map((e) => (e.field ? `${e.field}: ${e.message}` : e.message)).join('. ');
+    return res.status(400).json({ success: false, message, errors });
   }
   req.body = value;
   next();
 };
 
 const fieldSchema = Joi.object({
-  name: Joi.string().required(),
-  slug: Joi.string().optional(),
+  name: Joi.string().trim().min(1).required(),
+  slug: optionalStr,
   type: Joi.string().valid('number', 'text', 'date', 'dropdown', 'boolean', 'currency', 'percentage').required(),
   required: Joi.boolean().default(false),
-  options: Joi.array().items(Joi.string()).default([]),
+  options: Joi.array().items(Joi.string().allow('')).default([]),
   defaultValue: Joi.any().optional(),
   order: Joi.number().default(0),
 });
@@ -24,11 +45,11 @@ const schemas = {
   register: Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(8).required(),
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-    businessName: Joi.string().required(),
-    businessType: Joi.string().required(),
-    contactNumber: Joi.string().optional(),
+    firstName: Joi.string().trim().min(1).required(),
+    lastName: Joi.string().trim().min(1).required(),
+    businessName: Joi.string().trim().min(1).required(),
+    businessType: Joi.string().trim().min(1).required(),
+    contactNumber: optionalStr,
     timezone: Joi.string().default('UTC'),
   }),
 
@@ -52,37 +73,37 @@ const schemas = {
     firstName: Joi.string().trim().min(1).required(),
     lastName: Joi.string().trim().min(1).required(),
     role: Joi.string().valid('staff').default('staff'),
-    phone: Joi.string().allow('').optional(),
+    phone: optionalStr,
   }),
 
   updateUser: Joi.object({
     firstName: Joi.string().trim().min(1).optional(),
     lastName: Joi.string().trim().min(1).optional(),
-    phone: Joi.string().allow('').optional(),
-    password: Joi.string().min(8).optional(),
-    avatar: Joi.string().allow('').optional(),
-    fcmToken: Joi.string().optional(),
+    phone: optionalStr,
+    password: Joi.alternatives().try(Joi.valid(''), Joi.string().min(8)).optional(),
+    avatar: optionalStr,
+    fcmToken: optionalStr,
     isActive: Joi.boolean().optional(),
   }),
 
   registerFcmToken: Joi.object({
-    fcmToken: Joi.string().required(),
+    fcmToken: Joi.string().trim().min(1).required(),
   }),
 
   updateBusiness: Joi.object({
-    name: Joi.string().optional(),
-    type: Joi.string().optional(),
-    logo: Joi.string().optional(),
+    name: optionalStr,
+    type: optionalStr,
+    logo: optionalStr,
     address: Joi.object().optional(),
-    contactNumber: Joi.string().optional(),
-    timezone: Joi.string().optional(),
+    contactNumber: optionalStr,
+    timezone: optionalStr,
     branding: Joi.object().optional(),
     settings: Joi.object().optional(),
   }),
 
   createModule: Joi.object({
     name: Joi.string().trim().min(1).required(),
-    description: Joi.string().allow('').default(''),
+    description: defaultEmptyStr,
     icon: Joi.string().default('chart-bar'),
     color: Joi.string().default('#6366F1'),
     fields: Joi.array().items(fieldSchema).min(1).required(),
@@ -90,9 +111,9 @@ const schemas = {
 
   updateModule: Joi.object({
     name: Joi.string().trim().min(1).optional(),
-    description: Joi.string().allow('').optional(),
-    icon: Joi.string().optional(),
-    color: Joi.string().optional(),
+    description: optionalStr,
+    icon: optionalStr,
+    color: optionalStr,
     fields: Joi.array().items(fieldSchema).optional(),
     isActive: Joi.boolean().optional(),
   }),
@@ -100,14 +121,14 @@ const schemas = {
   createEntry: Joi.object({
     moduleId: Joi.string().required(),
     entryDate: Joi.date().required(),
-    values: Joi.array().items(
-      Joi.object({
-        fieldSlug: Joi.string().required(),
-        value: Joi.any().required(),
-      })
-    ).min(1).required(),
-    notes: Joi.string().allow('').default(''),
+    values: Joi.array().items(entryValueSchema).min(1).required(),
+    notes: defaultEmptyStr,
   }),
+
+  updateEntry: Joi.object({
+    values: Joi.array().items(entryValueSchema).min(1).optional(),
+    notes: optionalStr,
+  }).or('values', 'notes'),
 
   generateReport: Joi.object({
     type: Joi.string().valid('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'custom').required(),
@@ -121,4 +142,4 @@ const schemas = {
   }),
 };
 
-module.exports = { validate, schemas };
+module.exports = { validate, schemas, emptyStr, optionalStr, defaultEmptyStr };

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Plus, Package, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { moduleAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 const iconMap = {
   instagram: '📸',
@@ -41,7 +42,7 @@ export default function Modules() {
       toast.success(data.message || 'Default modules installed');
       loadModules();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to install default modules');
+      toast.error(parseApiError(err, 'Failed to install default modules'));
     } finally {
       setSeeding(false);
     }
@@ -56,7 +57,7 @@ export default function Modules() {
       toast.success('Module deleted');
       setModules((prev) => prev.filter((m) => m._id !== mod._id));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete module');
+      toast.error(parseApiError(err, 'Failed to delete module'));
     } finally {
       setDeletingId(null);
     }

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Trash2, GripVertical, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { moduleAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 const FIELD_TYPES = ['number', 'text', 'date', 'dropdown', 'boolean', 'currency', 'percentage'];
 
@@ -61,7 +62,7 @@ export default function ModuleBuilder() {
       toast.success('Module deleted');
       navigate('/modules');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete module');
+      toast.error(parseApiError(err, 'Failed to delete module'));
     } finally {
       setDeleting(false);
     }
@@ -84,8 +85,7 @@ export default function ModuleBuilder() {
       }
       navigate('/modules');
     } catch (err) {
-      const details = err.response?.data?.errors?.map((e) => e.message).join(', ');
-      toast.error(details || err.response?.data?.message || 'Failed to save module');
+      toast.error(parseApiError(err, 'Failed to save module'));
     } finally {
       setLoading(false);
     }

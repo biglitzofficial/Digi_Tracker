@@ -172,9 +172,18 @@ class EntryService {
       if (!field) throw new AppError(`Unknown field: ${val.fieldSlug}`, 400);
 
       if (['number', 'currency', 'percentage'].includes(field.type)) {
-        if (isNaN(parseFloat(val.value))) {
+        const num = parseFloat(val.value);
+        if (isNaN(num)) {
           throw new AppError(`Field "${field.name}" must be a number`, 400);
         }
+        if (field.type === 'percentage') {
+          if (num < 0 || num > 100) {
+            throw new AppError(`Field "${field.name}" must be between 0 and 100`, 400);
+          }
+        } else if (num < 0) {
+          throw new AppError(`Field "${field.name}" cannot be negative`, 400);
+        }
+        continue;
       }
       if (field.type === 'boolean' && typeof val.value !== 'boolean') {
         throw new AppError(`Field "${field.name}" must be true or false`, 400);

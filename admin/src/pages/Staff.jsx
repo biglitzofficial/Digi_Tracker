@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Search, MoreVertical, UserCheck, UserX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { userAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 export default function Staff() {
   const [staff, setStaff] = useState([]);
@@ -41,8 +42,7 @@ export default function Staff() {
       setForm({ email: '', password: '', firstName: '', lastName: '', phone: '' });
       loadStaff();
     } catch (err) {
-      const details = err.response?.data?.errors?.map((e) => e.message).join(', ');
-      toast.error(details || err.response?.data?.message || 'Failed to save staff');
+      toast.error(parseApiError(err, 'Failed to save staff'));
     }
   };
 

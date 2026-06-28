@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { entryAPI, moduleAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 const iconMap = {
   instagram: '📸',
@@ -14,13 +15,7 @@ const iconMap = {
   'google-my-business': '📍',
 };
 
-function parseApiError(err) {
-  const data = err.response?.data;
-  if (data?.errors?.length) {
-    return data.errors.map((e) => e.message).join('. ');
-  }
-  return data?.message || 'Failed to save entry';
-}
+function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
@@ -213,7 +208,7 @@ export default function EntryForm() {
       }
       navigate('/');
     } catch (err) {
-      toast.error(parseApiError(err));
+      toast.error(parseApiError(err, 'Failed to save entry'));
     } finally {
       setSubmitting(false);
     }

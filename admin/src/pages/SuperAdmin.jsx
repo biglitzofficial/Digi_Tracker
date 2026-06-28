@@ -4,6 +4,7 @@ import { Building2, CreditCard, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { businessAPI, planAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 import EmptyState from '../components/EmptyState';
 
 export default function SuperAdmin() {
@@ -42,7 +43,7 @@ export default function SuperAdmin() {
       const { data } = await planAPI.listSubscriptions();
       setSubscriptions(data.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Update failed');
+      toast.error(parseApiError(err, 'Update failed'));
     }
   };
 

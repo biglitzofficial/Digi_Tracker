@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { TrendingUp, Mail, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ export default function ForgotPassword() {
       setSent(true);
       toast.success('Reset link sent if email exists');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Request failed');
+      toast.error(parseApiError(err, 'Request failed'));
     } finally {
       setLoading(false);
     }

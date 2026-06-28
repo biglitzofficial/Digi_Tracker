@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { TrendingUp, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { parseApiError } from '../utils/apiError';
 
 export default function Login() {
   const [email, setEmail] = useState('owner@fitnesspro.com');
@@ -20,7 +21,7 @@ export default function Login() {
       toast.success('Welcome back!');
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      toast.error(parseApiError(err, 'Login failed'));
     } finally {
       setLoading(false);
     }

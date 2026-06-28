@@ -13,6 +13,6 @@ router.get('/history/me', entryController.getMyHistory);
 router.get('/', entryController.listEntries);
 router.get('/:id', entryController.getEntry);
 router.post('/', authorize('staff', 'business_owner'), requireActiveSubscription, validate(schemas.createEntry), entryController.createEntry);
-router.put('/:id', authorize('staff', 'business_owner'), requireActiveSubscription, entryController.updateEntry);
+router.put('/:id', authorize('staff', 'business_owner'), requireActiveSubscription, validate(schemas.updateEntry), entryController.updateEntry);
 
 module.exports = router;

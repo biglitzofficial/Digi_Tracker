@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Building2, Users, Package, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 const steps = [
   { id: 1, title: 'Business Info', icon: Building2 },
@@ -33,7 +34,7 @@ export default function Onboarding() {
       toast.success('Account created!');
       setStep(4);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      toast.error(parseApiError(err, 'Registration failed'));
     }
   };
 

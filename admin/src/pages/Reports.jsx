@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Download, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { reportAPI } from '../services/api';
+import { parseApiError } from '../utils/apiError';
 
 export default function Reports() {
   const [reports, setReports] = useState([]);
@@ -33,7 +34,7 @@ export default function Reports() {
       toast.success('Report generated successfully');
       loadReports();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to generate report');
+      toast.error(parseApiError(err, 'Failed to generate report'));
     } finally {
       setGenerating(false);
     }
