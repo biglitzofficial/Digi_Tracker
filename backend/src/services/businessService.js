@@ -1,4 +1,6 @@
 const slugify = require('slugify');
+const store = require('../db/firestoreStore');
+const { COLLECTIONS } = store;
 const businessRepository = require('../repositories/businessRepository');
 const userRepository = require('../repositories/userRepository');
 const { planRepository, subscriptionRepository } = require('../repositories/firebaseRepositories');
@@ -85,6 +87,32 @@ class BusinessService {
       },
       modules: { created, skipped },
     };
+  }
+
+  /** Super admin: permanently delete a business and all related data. */
+  async delete(id) {
+    const business = await businessRepository.findById(id);
+    if (!business) throw new AppError('Business not found', 404);
+
+    const businessId = String(id);
+    const users = await store.findAll(COLLECTIONS.users, { businessId });
+    await Promise.all(
+      users.map((user) => store.deleteMany(COLLECTIONS.refreshTokens, { userId: String(user._id) }))
+    );
+
+    await Promise.all([
+      store.deleteMany(COLLECTIONS.users, { businessId }),
+      store.deleteMany(COLLECTIONS.modules, { businessId }),
+      store.deleteMany(COLLECTIONS.entries, { businessId }),
+      store.deleteMany(COLLECTIONS.subscriptions, { businessId }),
+      store.deleteMany(COLLECTIONS.rewards, { businessId }),
+      store.deleteMany(COLLECTIONS.notifications, { businessId }),
+      store.deleteMany(COLLECTIONS.reports, { businessId }),
+      store.deleteMany(COLLECTIONS.auditLogs, { businessId }),
+    ]);
+
+    await businessRepository.deleteById(id);
+    return { name: business.name };
   }
 }
 

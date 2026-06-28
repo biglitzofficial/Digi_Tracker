@@ -22,6 +22,10 @@ class BusinessRepository {
     const result = await store.find(COLLECTIONS.businesses, filters, page, limit);
     return { businesses: result.docs, total: result.total, page: result.page, limit: result.limit, pages: result.pages };
   }
+
+  async deleteById(id) {
+    return store.deleteById(COLLECTIONS.businesses, id);
+  }
 }
 
 module.exports = new BusinessRepository();

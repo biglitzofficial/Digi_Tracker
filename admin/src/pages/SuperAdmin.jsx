@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { Building2, CreditCard, Shield, Plus } from 'lucide-react';
+import { Building2, CreditCard, Shield, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { businessAPI, planAPI } from '../services/api';
@@ -89,6 +89,25 @@ export default function SuperAdmin() {
     window.location.reload();
   };
 
+  const handleDeleteBusiness = async (business) => {
+    const confirmed = window.confirm(
+      `Delete "${business.name}" permanently?\n\nThis removes all staff, modules, entries, and subscription data for this business. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await businessAPI.delete(business._id);
+      const activeId = localStorage.getItem('activeBusinessId');
+      if (activeId === business._id) {
+        localStorage.removeItem('activeBusinessId');
+      }
+      toast.success(`"${business.name}" deleted`);
+      load();
+    } catch (err) {
+      toast.error(parseApiError(err, 'Failed to delete business'));
+    }
+  };
+
   const tabs = [
     { id: 'businesses', label: 'Businesses', icon: Building2 },
     { id: 'plans', label: 'Plans', icon: CreditCard },
@@ -167,13 +186,23 @@ export default function SuperAdmin() {
                     <td className="px-6 py-4 text-gray-500">{b.timezone}</td>
                     <td className="px-6 py-4 text-gray-500">{new Date(b.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                        onClick={() => selectBusiness(b._id)}
-                      >
-                        Manage →
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                          onClick={() => selectBusiness(b._id)}
+                        >
+                          Manage →
+                        </button>
+                        <button
+                          type="button"
+                          className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                          onClick={() => handleDeleteBusiness(b)}
+                          title={`Delete ${b.name}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

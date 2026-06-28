@@ -12,5 +12,6 @@ router.put('/me', authorize('business_owner'), tenantScope, validate(schemas.upd
 router.get('/', authorize('super_admin'), businessController.listBusinesses);
 router.post('/', authorize('super_admin'), validate(schemas.createBusiness), businessController.createBusiness);
 router.get('/:id', authorize('super_admin'), businessController.getBusiness);
+router.delete('/:id', authorize('super_admin'), businessController.deleteBusiness);
 
 module.exports = router;

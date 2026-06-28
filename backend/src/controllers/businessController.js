@@ -28,4 +28,9 @@ const createBusiness = asyncHandler(async (req, res) => {
   sendSuccess(res, result, 'Business created with default modules', 201);
 });
 
-module.exports = { getMyBusiness, updateMyBusiness, listBusinesses, getBusiness, createBusiness };
+const deleteBusiness = asyncHandler(async (req, res) => {
+  const result = await businessService.delete(req.params.id);
+  sendSuccess(res, result, `Business "${result.name}" deleted`);
+});
+
+module.exports = { getMyBusiness, updateMyBusiness, listBusinesses, getBusiness, createBusiness, deleteBusiness };

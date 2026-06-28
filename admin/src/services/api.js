@@ -71,6 +71,7 @@ export const businessAPI = {
   list: () => api.get('/businesses'),
   get: (id) => api.get(`/businesses/${id}`),
   create: (data) => api.post('/businesses', data),
+  delete: (id) => api.delete(`/businesses/${id}`),
 };
 
 export const moduleAPI = {
