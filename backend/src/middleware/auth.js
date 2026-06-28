@@ -36,6 +36,33 @@ const authorize = (...roles) => (req, res, next) => {
   next();
 };
 
+const resolveBusinessContext = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'super_admin') {
+      if (!req.businessId) return next(new AppError('No business context', 403));
+      req.contextBusinessId = req.businessId;
+      return next();
+    }
+
+    const explicitId = req.query.businessId || req.body?.businessId;
+    if (explicitId) {
+      req.contextBusinessId = String(explicitId);
+      return next();
+    }
+
+    const businessRepository = require('../repositories/businessRepository');
+    const { businesses } = await businessRepository.findAll({}, 1, 1);
+    if (businesses.length === 1) {
+      req.contextBusinessId = String(businesses[0]._id);
+      return next();
+    }
+
+    return next(new AppError('businessId required for super admin', 400));
+  } catch (error) {
+    next(error);
+  }
+};
+
 const tenantScope = (req, res, next) => {
   if (req.user.role === 'super_admin') {
     req.tenantFilter = req.query.businessId ? { businessId: req.query.businessId } : {};
@@ -47,4 +74,4 @@ const tenantScope = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, authorize, tenantScope };
+module.exports = { authenticate, authorize, tenantScope, resolveBusinessContext };
