@@ -71,6 +71,8 @@ export const moduleAPI = {
 
 export const entryAPI = {
   list: (params) => api.get('/entries', { params }),
+  myHistory: (params) => api.get('/entries/history/me', { params }),
+  todayStatus: () => api.get('/entries/today/status'),
 };
 
 export const auditLogAPI = {
@@ -93,6 +95,7 @@ export const analyticsAPI = {
 
 export const rewardAPI = {
   leaderboard: (params) => api.get('/rewards/leaderboard', { params }),
+  me: () => api.get('/rewards/me'),
 };
 
 export const reportAPI = {
