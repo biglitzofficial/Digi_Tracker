@@ -10,6 +10,10 @@ const { errorHandler } = require('./utils/helpers');
 
 const app = express();
 
+if (config.env === 'production') {
+  app.set('trust proxy', 1);
+}
+
 const corsOptions = {
   origin(origin, callback) {
     if (config.env === 'development') {
